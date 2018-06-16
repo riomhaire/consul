@@ -2,6 +2,7 @@ package consul
 
 import (
 	"fmt"
+	"time"
 
 	consul "github.com/hashicorp/consul/api"
 )
@@ -29,6 +30,19 @@ func NewConsulClient(addr string) (*ConsulClient, error) {
 		return &ConsulClient{}, err
 	}
 	return &ConsulClient{Consul: c}, nil
+}
+
+// Register a service with consul local agent periodically
+func (c *ConsulClient) PeriodicRegister(id, name, host string, port int, path, health string, seconds int) error {
+
+	c.Register(id, name, host, port, path, health)
+	go func() {
+		for {
+			time.Sleep(time.Duration(seconds) * time.Second)
+			c.Register(id, name, host, port, path, health)
+		}
+	}()
+	return nil
 }
 
 // Register a service with consul local agent
